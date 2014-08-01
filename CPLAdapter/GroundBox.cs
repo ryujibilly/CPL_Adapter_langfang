@@ -239,14 +239,12 @@ namespace CPLAdapter
 
                         Pressuredatatemp.Add(temp[0]);
                         Pressuredatatemp.Add(temp[1]);
-
                         //System.Diagnostics.Trace.Write(string.Format("{0:X2} {0:X2} ", temp[0], temp[1]));
                         //t++;
                         //if (t % 16 == 0)
                         //{
                         //    System.Diagnostics.Trace.Write("\n");
                         //}
-
                         if (Pressuredatatemp.Count >= 802)                 //802个字节为一组进行回调
                         {
                             GetData(Pressuredatatemp.ToArray());

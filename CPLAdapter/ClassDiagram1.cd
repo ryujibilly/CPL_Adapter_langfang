@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CPLAdapter.Adapter" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAEAAACAAAAAACEAAAAAAIAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>Adapter.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.CommonData" Collapsed="true">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAAAAAAAAAAAAAIAEgABAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CommonData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.ConfigInfo" Collapsed="true">
+    <Position X="5.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAgAAAAAABAAAEBQAAAAAAABAAGAAAgAAAAAEAAQ=</HashCode>
+      <FileName>Config.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.Config" Collapsed="true">
+    <Position X="4" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAIAAAAgAAAAAAAAAAAAAAAAAAAAIA=</HashCode>
+      <FileName>Config.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.Form1" Collapsed="true">
+    <Position X="0.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>MAACAAAAEGAAEBAAACCAIAGCAAAEEAAAAOQgAAACAAg=</HashCode>
+      <FileName>Form1.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.GroundBox" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="2.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAYAAAMAEGAACAgAgAAAAACQIIQIAIAAIAAAAAIAYAA=</HashCode>
+      <FileName>GroundBox.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CPLAdapter.MMTimer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="5.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIgAAAEACAAAAABAAIAAAAAAAAAAAAAIQACAAAAAgA=</HashCode>
+      <FileName>MMTimer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CPLAdapter.Program" Collapsed="true">
+    <Position X="0.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>Program.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.LineProtocol" Collapsed="true">
+    <Position X="4" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAAAAAAAAACAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>司显协议\LineProtocol.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.WirelessProtocol" Collapsed="true">
+    <Position X="4" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAICACAAAgAAAAAACAARAAAAAAAAACCAAAAAA=</HashCode>
+      <FileName>司显协议\WirelessProtocol.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.TcpClient" Collapsed="true">
+    <Position X="5.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAACAAAAAgIABAAAAAABAAAAAAIAcAAAAAAAA=</HashCode>
+      <FileName>网络通讯\TcpClient.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.TcpServer" Collapsed="true">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAgBACACQCAgAAAAIAAACBAAAAEAIAAAgAAAEEA=</HashCode>
+      <FileName>网络通讯\TcpServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.UdpServer" Collapsed="true">
+    <Position X="2.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEBAACAAAAAgAAAAIABAAAAAAAAAIAAAIAAAEAA=</HashCode>
+      <FileName>网络通讯\UdpServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.Properties.Resources" Collapsed="true">
+    <Position X="2.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAABEAAAAQAAAAAAAAAAAAAAAIA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CPLAdapter.Properties.Settings" Collapsed="true">
+    <Position X="4" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="CPLAdapter.IGroundBox">
+    <Position X="3.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAAQAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>IGroundBox.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Delegate Name="CPLAdapter.DataRecvCallback">
+    <Position X="0.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>GroundBox.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>
