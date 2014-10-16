@@ -14,7 +14,9 @@ namespace CPLAdapter
         /// 压力数组队列
         /// </summary>
         private static Queue<byte[]> SppQueue = new Queue<byte[]>();
+        private static Queue<byte[]> DepQueue = new Queue<byte[]>();
         private static object QueueObj = new object();
+        private static object QueueObjt = new object();
 
         /// <summary>
         /// 获取列表中一个元素
@@ -32,6 +34,19 @@ namespace CPLAdapter
             }
             return bytesRet;
         }
+        public static byte[] GetDepthItem()
+        {
+            byte[] bytesRet = null;
+            lock (QueueObjt)
+            {
+                if (DepQueue.Count > 0)
+                {
+                    bytesRet = DepQueue.Dequeue();
+                }
+            }
+            return bytesRet;
+        }
+
         /// <summary>
         /// 向队列添加一个元素
         /// </summary>
@@ -45,6 +60,35 @@ namespace CPLAdapter
                     SppQueue.Dequeue();
                 }
                 SppQueue.Enqueue(item);
+            }
+        }
+        public static void SaveDepthQueue(byte[] item)
+        {
+            lock (QueueObjt)
+            {
+                if (DepQueue.Count > 4)
+                {
+                    DepQueue.Dequeue();
+                }
+                DepQueue.Enqueue(item);
+            }
+        }
+
+        internal static void ClearQueue()
+        {
+            lock (QueueObj)
+            {
+                if (SppQueue.Count > 0)
+                {
+                    SppQueue.Clear();
+                }
+            }
+            lock(QueueObjt)
+            {
+                if (DepQueue.Count > 0)
+                {
+                    DepQueue.Clear();
+                }
             }
         }
     }

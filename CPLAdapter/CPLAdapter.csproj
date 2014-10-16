@@ -44,7 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Adapter.cs" />
+    <Compile Include="Adapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="CommonData.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Form1.cs">
@@ -53,6 +55,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Funcs.cs" />
     <Compile Include="GroundBox.cs" />
     <Compile Include="IGroundBox.cs" />
     <Compile Include="司显协议\LineProtocol.cs" />
@@ -77,7 +80,6 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

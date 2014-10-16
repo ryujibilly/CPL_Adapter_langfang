@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,18 +11,24 @@ namespace CPLAdapter
     /// <summary>
     /// TCP服务器,接收CPL连接
     /// </summary>
-    class TcpServer
+    public class TcpServer
     {
         private int TcpPort = 8002;
         private Socket ServerSocket = null;
         private Thread RecvThread = null;
         private Socket CurClientSocket = null;
         private object ClientSocketAsynObj = new object();
+        private List<byte> DataTemp = new List<byte>();
+        private List<byte> DepthTemp = new List<byte>();
+        private byte[] Emp6 = new byte[6];
+        private byte[] Emp802 = new byte[802];
+        public GroundBox gBox { get; set; }
 
         /// <summary>
         /// 接收定时器
         /// </summary>
-        private MMTimer RecvTimer = null;
+        private MMTimer RecvTimer1 = null;
+        private MMTimer RecvTimer2 = null;
         private UInt16 RecvCount = 0;
         /// <summary>
         /// 是否开始测井
@@ -47,10 +55,11 @@ namespace CPLAdapter
             this.TcpPort = tcpPort;
             ServerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             RecvThread = new Thread(new ThreadStart(this.RecvThreadFunc));
-            RecvTimer = new MMTimer(this.SendTimerFunc);
-            WellDeptBytes = new byte[6];
-            WellDeptBytes[0] = WellDeptBytes[1] = (byte)'E';
+            RecvTimer1 = new MMTimer(this.SendTimerFunc);
+            RecvTimer2 = new MMTimer(this.SendTimerFunc_Depth);
         }
+
+
 
         /// <summary>
         /// tcp服务开始启动
@@ -64,8 +73,13 @@ namespace CPLAdapter
                 ServerSocket.Bind(ipEnd);
                 ServerSocket.Listen(10);
                 RecvThread.Start();
-                RecvTimer.Start(1000, true);
+                RecvTimer1.Start(1000, true);
+                RecvTimer2.Start(250, true);//Half period of circulation
                 bRet = true;
+                DataTemp.Add(0x53);
+                DataTemp.Add(0x53);
+                DepthTemp.Add((byte)'D');
+                DepthTemp.Add((byte)'D');
             }
             catch (Exception ex)
             {
@@ -100,9 +114,13 @@ namespace CPLAdapter
             catch { }
             try
             {
-                if (RecvTimer != null)
+                if (RecvTimer1 != null)
                 {
-                    RecvTimer.Stop();
+                    RecvTimer1.Stop();
+                }
+                if (RecvTimer2 != null)
+                {
+                    RecvTimer2.Stop();
                 }
             }
             catch { }
@@ -119,9 +137,9 @@ namespace CPLAdapter
                 try
                 {
                     CurClientSocket = ServerSocket.Accept();
-                    System.Diagnostics.Trace.WriteLine(string.Format("客户端{0}已经连接！",((IPEndPoint)CurClientSocket.RemoteEndPoint).Address.ToString()));
+                    Trace.WriteLine(string.Format("客户端{0}已经连接！",((IPEndPoint)CurClientSocket.RemoteEndPoint).Address.ToString()));
                     CurClientSocket.Send(ASCIIEncoding.ASCII.GetBytes("Server OK,YOU CAN SEND COMMAND"));
-                  
+
                     while (IsContinue)//一个新的连接
                     {
                         int rcvLen = CurClientSocket.Receive(bytesRecv);
@@ -142,10 +160,14 @@ namespace CPLAdapter
                             System.Diagnostics.Trace.WriteLine(string.Format("收到指令{0}", bytesRecv[6]));
                             lock (ClientSocketAsynObj)
                             {
+
+                                //43 4F 4D 44 20 20 00 30 00 00 00 00 00 00 00 00 20 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
                                 //开始测井0x3000
                                 if (bytesRecv[6] == 0x00)
                                 {
                                     IsStartWell = true;
+                                    CommonData.ClearQueue();
+                                    gBox.ClearQueue();
                                 }//停止测井
                                 else if (bytesRecv[6] == 0x01)
                                 {
@@ -154,6 +176,7 @@ namespace CPLAdapter
                                 else if (bytesRecv[6] == 0x02)
                                 {
                                     IsStartDepth = true;
+    
                                 }
                                 //停止深度跟踪
                                 else if (bytesRecv[6] == 0x03)
@@ -188,6 +211,35 @@ namespace CPLAdapter
             }
             System.Diagnostics.Debug.Write("\n\n");
         }
+        private void SendTimerFunc_Depth(uint uTimerID, uint uMsg, UIntPtr dwUser, UIntPtr dw1, UIntPtr dw2)
+        {
+            if (IsStartDepth)
+            {
+                byte[] curWellDeptBytes = CommonData.GetDepthItem();
+                if (curWellDeptBytes!=null)
+                {
+                    DepthTemp.AddRange(curWellDeptBytes);
+                    while (DepthTemp.Count >= 6)
+                    {
+                        WellDeptBytes = new byte[6];
+                        //WellDeptBytes[0] = WellDeptBytes[1] = (byte)'D';
+                        WellDeptBytes[0] = DepthTemp[0];
+                        WellDeptBytes[1] = DepthTemp[1];
+                        WellDeptBytes[2] = DepthTemp[4];
+                        WellDeptBytes[3] = DepthTemp[5];
+                        WellDeptBytes[4] = DepthTemp[2];
+                        WellDeptBytes[5] = DepthTemp[3];
+                        DepthTemp.RemoveRange(0, 6);
+                        Trace.WriteLine(DateTime.Now.ToLongTimeString());
+                        Funcs._funcs.print(WellDeptBytes);
+                        if (CurClientSocket.Send(WellDeptBytes) <= 0)
+                        {
+                            System.Diagnostics.Trace.WriteLine("下发深度数据失败！");
+                        }
+                    }
+                }
+            }
+        }
         /// <summary>
         /// 定时发送函数
         /// </summary>
@@ -201,37 +253,27 @@ namespace CPLAdapter
             try
             {
                 RecvCount++;
-                //发送深度数据//c3 f5 48 40
-                CommonData.WellDepth++;//????????
-                byte[] curWellDeptBytes = BitConverter.GetBytes(CommonData.WellDepth);
-                WellDeptBytes[2] = curWellDeptBytes[0];
-                WellDeptBytes[3] = curWellDeptBytes[1];
-                WellDeptBytes[4] = curWellDeptBytes[2];
-                WellDeptBytes[5] = curWellDeptBytes[3];
-
-                lock (ClientSocketAsynObj)
-                {
-                    if (IsStartDepth && CurClientSocket != null && CurClientSocket.Connected)
-                    {
-                        if (CurClientSocket.Send(WellDeptBytes) <= 0)
-                        {
-                            System.Diagnostics.Trace.WriteLine("下发深度数据失败！");
-                        }
-                    }
-                }
-
-
+                //send spp
                 lock (ClientSocketAsynObj)
                 {
                     if (IsStartWell && CurClientSocket != null && CurClientSocket.Connected)
                     {
                         byte[] curSppBytes = CommonData.GetQueueItem();
-                        if (curSppBytes != null)
+                        DataTemp.AddRange(curSppBytes);
+                        while (DataTemp.Count >= 802)
                         {
-                            if (CurClientSocket.Send(curSppBytes) <= 0)
+                            byte[] TempBytes=new byte[802];
+                            for (int i = 0; i < 802;i++ )
                             {
-
+                                TempBytes[i] = DataTemp[i];
+                            }
+                            DataTemp.RemoveRange(0, 802);
+                            Trace.WriteLine(DateTime.Now.ToLongTimeString());
+                            Funcs._funcs.print(TempBytes);
+                            if (CurClientSocket.Send(TempBytes) <= 0)
+                            {
                                 System.Diagnostics.Trace.WriteLine("下发压力数据失败！");
+                                break;
                             }   
                         }
                     }
@@ -242,5 +284,37 @@ namespace CPLAdapter
                 System.Diagnostics.Trace.WriteLine("TCPServer::SendTimerFunc->" + e.Message);
             }
         }
+        //发送深度数据//c3 f5 48 40
+        //CommonData.WellDepth++;//????????
+        //byte[] curWellDeptBytes = BitConverter.GetBytes(CommonData.WellDepth);
+        //WellDeptBytes[2] = curWellDeptBytes[0];
+        //WellDeptBytes[3] = curWellDeptBytes[1];
+        //WellDeptBytes[4] = curWellDeptBytes[2];
+        //WellDeptBytes[5] = curWellDeptBytes[3];
+
+
+        //send depth
+        //lock (ClientSocketAsynObj)
+        //{
+        //    if (IsStartDepth &&IsStartDepth && CurClientSocket != null && CurClientSocket.Connected)
+        //    {
+        //        byte[] curWellDeptBytes = CommonData.GetDepthItem();
+        //        DepthTemp.AddRange(curWellDeptBytes);
+        //        while (DepthTemp.Count >= 6)
+        //        {
+        //            WellDeptBytes = new byte[6];
+        //            for (int i = 0; i < 4;i++ )
+        //            {
+        //                WellDeptBytes[i+2] = DepthTemp[i];
+        //            }
+        //            DepthTemp.RemoveRange(0, 6);
+        //            Funcs._funcs.print(WellDeptBytes);
+        //            if (CurClientSocket.Send(WellDeptBytes) <= 0)
+        //            {
+        //                System.Diagnostics.Trace.WriteLine("下发深度数据失败！");
+        //            }
+        //        }
+        //    }
+        //}
     }        
 }

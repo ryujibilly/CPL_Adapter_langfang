@@ -21,7 +21,7 @@ namespace CPLAdapter
             btnStop.Enabled = false;
             LoadConfig();
         }
-        private void LoadConfig()
+        private void LoadConfig()//配置文件  Xml
         {
             Config.GetConfig();
             txtPort.Text = Config.CfgInfo.ComPortNum;
@@ -66,10 +66,13 @@ namespace CPLAdapter
         }
 
         Adapter adp = null;
-        private void btnStart_Click(object sender, EventArgs e)
+        private void btnStart_Click(object sender, EventArgs e)//开始   调用ADAPTER
         {
             adp = new Adapter();
             string str=adp.Start();
+            adp.BeginWork();
+            adp.gBox.ClearQueue();
+            adp.tcpServer.gBox = adp.gBox;
             if (str != null)
             {
                 MessageBox.Show(str);

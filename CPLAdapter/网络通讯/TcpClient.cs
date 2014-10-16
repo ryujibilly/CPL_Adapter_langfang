@@ -43,9 +43,8 @@ namespace CPLAdapter
             this.ServerHostName = strCPLHostName;
             this.ServerPort = svrCPLPort;
             this.IBox = iBox;
-            CMSUdpClient = new UdpClient(strCMSHostName, srvCMSPort);
-            ClientThread = new Thread(new ThreadStart(RcvThreadFunc));
-
+            //CMSUdpClient = new UdpClient(strCMSHostName, srvCMSPort);
+            //ClientThread = new Thread(new ThreadStart(RcvThreadFunc));
         }
         /// <summary>
         /// 开始启动客户端接收
