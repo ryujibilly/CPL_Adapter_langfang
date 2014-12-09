@@ -8,7 +8,7 @@ using System.Collections;
 using System.Linq;
 using System.IO;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     public delegate void DataRecvCallback(byte[] datalist,int dataType);
 
@@ -19,11 +19,11 @@ namespace CPLAdapter
         private DataRecvCallback GetData;
         private string BoxCom;
         private int BoxBaudRate;
-        private int TimerCount = 0;
+        //private int TimerCount = 0;
         private WirelessProtocol WireProt = null;
         private LineProtocol LineProt = null;
-        private FileStream fs;
-        private StreamWriter sw;
+        //private FileStream fs;
+        //private StreamWriter sw;
         private byte[] FragHead = new byte[4];
         private List<byte> Pressuredatatemp = new List<byte>();
         private List<byte> Rawdata = new List<byte>();
@@ -34,6 +34,7 @@ namespace CPLAdapter
         private object objDisplay = new object();
         private static object QueueObj = new object();
         private byte[] START = new byte[] { 0xcc, 0xcc, 0xcc, 0xcc, 0xa2 };
+        private SppType datatype = SppType.OR;
         public enum DecodeMethod { origin, non_direct, filter };
         public void BeginWork()
         {
@@ -41,7 +42,18 @@ namespace CPLAdapter
             CommonData.ClearQueue();
             Communication.Write(START, 0, 5);
         }
-
+        public void ChangeToOR()
+        {
+            datatype = SppType.OR;
+        }
+        public void ChangeToND()
+        {
+            datatype = SppType.ND;
+        }
+        public void ChangeToFT()
+        {
+            datatype = SppType.FT;
+        }
         public void ClearQueue()
         {
             lock (QueueObj)
@@ -255,6 +267,10 @@ namespace CPLAdapter
         /// </summary>
         private void Communication_DataReceived(object sender, SerialDataReceivedEventArgs e)//串口数据接收   亮
         {
+            try
+            {
+
+            
             Thread.Sleep(10);                 
             byte[] receive = new byte[Communication.BytesToRead];
             Communication.Read(receive, 0, receive.Length);
@@ -281,13 +297,21 @@ namespace CPLAdapter
                     {
                         for (int m = 0; m < 100 ; m++)
                         {
-
-                            Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 0]);//origin
-                            Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 1]);
-                            //Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 2]);//filter
-                            //Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 3]);
-                            //Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 4]);//nodirect
-                            //Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 5]);  
+                            if(datatype.Equals(SppType.OR))
+                            {
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 0]);//origin
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 1]);
+                            }
+                            if(datatype.Equals(SppType.ND))
+                            {
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 2]);//nodirect
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 3]);
+                            }
+                            if (datatype.Equals(SppType.FT))
+                            {
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 4]);//filter
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 5]);
+                            }
                         }
                     }
                     Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 0]);//HookLoad
@@ -367,6 +391,12 @@ namespace CPLAdapter
             else
             {
                 ;//找不到帧头时应错位继续寻找  亮
+            }
+                }
+            catch(Exception ex)
+            {
+                System.Console.WriteLine(
+                ex.Message);
             }
         }
 

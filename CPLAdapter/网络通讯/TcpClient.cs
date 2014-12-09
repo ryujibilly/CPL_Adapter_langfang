@@ -4,9 +4,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
-    class TcpClient
+    public class TcpClient
     {
         private IGroundBox IBox = null;
         /// <summary>

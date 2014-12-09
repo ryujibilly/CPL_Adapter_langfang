@@ -5,12 +5,12 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     /// <summary>
     /// UDP服务,接收CMS发送过来的井深数据
     /// </summary>
-    class UdpServer
+    public class UdpServer
     {
         /// <summary>
         /// 本地监听端口号
@@ -27,7 +27,7 @@ namespace CPLAdapter
         /// <summary>
         /// 是否继续循环
         /// </summary>
-        private bool IsContinue = true;
+        //private bool IsContinue = true;
         /// <summary>
         /// 构造函数
         /// </summary>

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
-    interface IGroundBox
+    public interface IGroundBox
     {
         bool Start();
         void Stop();

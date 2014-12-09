@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
-    class ConfigInfo
+    public class ConfigInfo
     {
         /// <summary>
         /// 本机UDP接收深度端口号
@@ -19,7 +19,7 @@ namespace CPLAdapter
         /// <summary>
         /// CMS端wits接收IP
         /// </summary>
-        public string CMSWitsRecvIP="192.168.1.230";
+        public string CMSWitsRecvIP="99.0.0.20";
         /// <summary>
         /// CMS端wits接收端口号
         /// </summary>
@@ -31,7 +31,7 @@ namespace CPLAdapter
         /// <summary>
         /// CPL端WITS服务IP
         /// </summary>
-        public string CPLWitsIP="192.168.1.231";
+        public string CPLWitsIP="99.0.0.61";
         /// <summary>
         /// 地面箱串口号
         /// </summary>
@@ -58,7 +58,7 @@ namespace CPLAdapter
         public bool IsValue = false;
 
     }
-    class Config
+    public class Config
     {
         /// <summary>
         /// 全局配置信息

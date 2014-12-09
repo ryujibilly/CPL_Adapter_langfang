@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     class WirelessProtocol
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     class MMTimer : IDisposable
     {

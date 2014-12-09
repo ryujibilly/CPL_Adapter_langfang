@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     static class Program
     {

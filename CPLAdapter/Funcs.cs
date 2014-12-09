@@ -4,15 +4,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace CPLAdapter
+namespace GLAS_Adapter
 {
     public sealed class Funcs
     {
         public static readonly Funcs _funcs = new Funcs();
         public void print(byte[] receive)
         {
-            //System.Diagnostics.Debug.WriteLine(receive.Length + "->" + DateTime.Now.ToString());
-            //return;
             int c = 0;
             for (int i = 0; i < receive.Length; i++)
             {
