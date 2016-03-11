@@ -9,12 +9,16 @@ using System.Windows.Forms;
 namespace GLAS_Adapter
 {
     public enum SppType { OR,ND,FT};
-    public enum DepType { CMS,CPL};
+    public enum DepType { CMS,CPL,SK2000};
     public partial class Form1 : Form
     {
         public bool adpRun { set; get; }
         public  Adapter adp{get;set;}
         private DepType depType { get; set; }
+        public DepType getDepType()
+        {
+            return depType;
+        }
         public Form1()
         {
             InitializeComponent();
@@ -27,10 +31,19 @@ namespace GLAS_Adapter
         {
             depType = DepType.CMS;
         }
+        public void ChangeToSK2000()
+        {
+            depType = DepType.SK2000;
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             adpRun = false;
-            txtPort.Items.AddRange(System.IO.Ports.SerialPort.GetPortNames());
+            String[] ports = System.IO.Ports.SerialPort.GetPortNames();
+            if (ports.Length != 0)
+            {
+                txtPort.Items.AddRange(ports);
+                txtPort.Text = ports[0];
+            }
             btnStart.Enabled = true;
             btnStop.Enabled = false;
             depType = DepType.CPL;
@@ -159,6 +172,12 @@ namespace GLAS_Adapter
             groupBox3.Enabled = true;
             ChangeToCMS();
         }
+        private void rbDEP_2000_CheckedChanged(object sender, EventArgs e)
+        {
+            groupBox1.Enabled = false;
+            groupBox3.Enabled = true;
+            ChangeToSK2000();
+        }
 
         private void rbSpp_OR_CheckedChanged(object sender, EventArgs e)
         {
@@ -174,6 +193,8 @@ namespace GLAS_Adapter
         {
             adp.gBox.ChangeToFT();
         }
+
+
 
         private void Form1_Resize(object sender, EventArgs e)
         {
@@ -218,6 +239,27 @@ namespace GLAS_Adapter
         {
             notifyIcon1.ShowBalloonTip(2000);
         }
+
+        private void groupBox2_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtCPLIP_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtPort_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
 
     }
 }

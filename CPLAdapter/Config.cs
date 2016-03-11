@@ -198,6 +198,5 @@ namespace GLAS_Adapter
             }
             return bIsGet;   
         }
-        
     }
 }

@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace GLAS_Adapter
 {
+
     /// <summary>
     /// UDP服务,接收CMS发送过来的井深数据
     /// </summary>
@@ -25,6 +26,17 @@ namespace GLAS_Adapter
         /// </summary>
         private Thread RecvThread = null;
         /// <summary>
+        /// 神开2000深度信息字符数组
+        /// </summary>
+        private char[] SK2000_Chars = null;
+        /// <summary>
+        /// 神开2000深度信息字符队列
+        /// </summary>
+        private List<char> SK2000List = new List<char>();
+
+        private char[] emp1255 = new char[1255];
+        private DepType TypeDepth { get; set; }
+        /// <summary>
         /// 是否继续循环
         /// </summary>
         //private bool IsContinue = true;
@@ -32,10 +44,11 @@ namespace GLAS_Adapter
         /// 构造函数
         /// </summary>
         /// <param name="Port"></param>
-        public UdpServer(int localUdpPort)
+        public UdpServer(int localUdpPort,DepType dt)
         {
             this.UdpPort = localUdpPort;
             ServerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            TypeDepth = dt;
             RecvThread = new Thread(new ThreadStart(this.Thread_Func));
         }
 
@@ -84,7 +97,7 @@ namespace GLAS_Adapter
             catch{}   
         }
 
-        private byte[] BytesRecv = new byte[1024];
+        private byte[] BytesRecv = new byte[10240];
         /// <summary>
         /// 在此线程函数中接收UDP数据
         /// </summary>
@@ -97,19 +110,52 @@ namespace GLAS_Adapter
             {
                 try
                 {
-                    int rcvLen = ServerSocket.ReceiveFrom(BytesRecv, ref Remote);
-                    if (rcvLen <= 0)
+                    if(TypeDepth.Equals(DepType.CMS))//从CMS平台 UDP获得广播深度
                     {
-                        Thread.Sleep(300);
-                        continue;
+                        int rcvLen = ServerSocket.ReceiveFrom(BytesRecv, ref Remote);
+                        if (rcvLen <= 0)
+                        {
+                            Thread.Sleep(300);
+                            continue;
+                        }
+                        string strWitsDepth = System.Text.Encoding.ASCII.GetString(BytesRecv, 0, rcvLen);
+                        if (strWitsDepth.StartsWith("&&\r\n01"))
+                        {
+                            float fWellDepth = GetWellDepth(strWitsDepth);
+                            System.Diagnostics.Trace.WriteLine("从CMS收到深度数据:" + fWellDepth);
+                            //System.Diagnostics.Trace.WriteLine(strWitsDepth);
+                            CommonData.WellDepth = fWellDepth;
+                        }
                     }
-                    string strWitsDepth = System.Text.Encoding.ASCII.GetString(BytesRecv, 0, rcvLen);
-                    if (strWitsDepth.StartsWith("&&\r\n01"))
+                    if(TypeDepth.Equals(DepType.SK2000))//从SK2000平台 UDP获得广播深度
                     {
-                        float fWellDepth = GetWellDepth(strWitsDepth);
-                        System.Diagnostics.Trace.WriteLine("从CMS收到深度数据:"+fWellDepth);
-                        //System.Diagnostics.Trace.WriteLine(strWitsDepth);
-                        CommonData.WellDepth = fWellDepth;
+                        while (true)
+                        {
+                            int rcvLen = ServerSocket.ReceiveFrom(BytesRecv, ref Remote);
+                            if (rcvLen <= 0)
+                            {
+                                Thread.Sleep(200);
+                                continue;
+                            }
+                            SK2000_Chars = System.Text.Encoding.ASCII.GetChars(BytesRecv, 0, rcvLen);
+                            SK2000List.AddRange(SK2000_Chars);
+                            if (SK2000List.Count >= 1255 && SK2000List[4] == '/')
+                                /*
+                                 * SK2000帧格式截断
+                                 */
+                            {
+                                char[] temp = emp1255;
+                                for (int i = 0; i < 1255; i++)
+                                {
+                                    temp[i] = SK2000List[i];
+                                }
+                                SK2000List.RemoveRange(0, 1255);
+                                float fWellDepth = GetWellDepth(temp);
+                                System.Diagnostics.Trace.WriteLine("从SK2000收到深度数据:" + fWellDepth);
+                                CommonData.WellDepth = fWellDepth;
+                            }
+                            else SK2000List.RemoveRange(0, 1);
+                        }
                     }
                 }
                 catch(Exception e)
@@ -135,6 +181,24 @@ namespace GLAS_Adapter
                 }
             }
             return 0.0f;
+        }
+        /// <summary>
+        /// 从WITS中获取深度
+        /// </summary>
+        /// <param name="strDepthWits"></param>
+        /// <returns></returns>
+        private float GetWellDepth(char[] charDepthWits)
+        {
+            float pi = 3.14f;
+            String tempS = null;
+            //Char[] tempC = new Char[10];
+            for (int i = 0; i < 10;i++)
+            {
+                tempS+= charDepthWits[825 + i];
+            }
+            //tempS = tempC;
+            pi = float.Parse(tempS);
+            return pi;
         }
     }
 }

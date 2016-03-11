@@ -11,7 +11,7 @@ namespace GLAS_Adapter
         private IGroundBox IBox = null;
         /// <summary>
         /// 
-        /// </summary>
+        /// </summary>  
         private UdpClient CMSUdpClient = null;
         /// <summary>
         /// 客户端tcp套接字

@@ -304,7 +304,7 @@ namespace GLAS_Adapter
                             }
                             if(datatype.Equals(SppType.ND))
                             {
-                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 2]);//nodirect
+                                Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 2]);//None Direction
                                 Pressure_data.Add(Rawdata[j * 610 + m * 6 + 6 + 3]);
                             }
                             if (datatype.Equals(SppType.FT))
@@ -314,23 +314,27 @@ namespace GLAS_Adapter
                             }
                         }
                     }
-                    Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 0]);//HookLoad
-                    Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 1]);
+                    //Depth_data.Add(0x00);
+                    //Depth_data.Add(0x00);//BPI方向  附0
                     Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 4]);//BPI
                     Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 5]);
+                    Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 0]);//HookLoad
+                    Depth_data.Add(Rawdata[6 + 610 * 9 + 600 + 1]);
                     Rawdata.RemoveRange(0,6112);
                     mark = CheckData(Rawdata.ToArray());
                     Trace.WriteLine("\r\n");
                     Trace.WriteLine(">>>>>>>>>> mark2=" + mark + "<<<<<<<<<<<<<");
 
-                    if(Depth_data.Count>=4)// 8 bytes as a row to callback
+                    if(Depth_data.Count>=6)// 8 bytes as a row to callback
                     {
-                        Depthdatatemp.Add(Depth_data[0]);
+                        //Depthdatatemp.Add(Depth_data[0]);
+                        //Depthdatatemp.Add(Depth_data[1]);//BPI方向
                         Depthdatatemp.Add(Depth_data[1]);
-                        Depthdatatemp.Add(Depth_data[2]);
+                        Depthdatatemp.Add(Depth_data[2]);//BPI
                         Depthdatatemp.Add(Depth_data[3]);
-                        Depth_data.RemoveRange(0, 4);
-                        GetData(Depthdatatemp.ToArray(),2);
+                        Depthdatatemp.Add(Depth_data[4]);//HookLoad
+                        Depth_data.RemoveRange(0, 6);
+                        GetData(Depthdatatemp.ToArray(),2);//传深度
                         Depthdatatemp.Clear();
                         Depthdatatemp.Add((byte)'D');//"DD"
                         Depthdatatemp.Add((byte)'D');
@@ -395,8 +399,7 @@ namespace GLAS_Adapter
                 }
             catch(Exception ex)
             {
-                System.Console.WriteLine(
-                ex.Message);
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
 

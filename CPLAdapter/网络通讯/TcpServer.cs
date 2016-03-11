@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.IO;
+using System.Windows.Forms;
 
 namespace GLAS_Adapter
 {
@@ -21,7 +23,15 @@ namespace GLAS_Adapter
         private List<byte> DataTemp = new List<byte>();
         private List<byte> DepthTemp = new List<byte>();
         private byte[] Emp6 = new byte[6];
+        private byte[] Emp8 = new byte[8];
         private byte[] Emp802 = new byte[802];
+        private byte[] Emp808 = new byte[808];
+        private byte[] TempSendBytes = new byte[808];
+        private bool IsDepthGotten = false;
+        private FileStream fs { get; set; }
+        private StreamWriter sw { get; set; }
+
+        public string OriginLog = Application.StartupPath + "\\SPP.txt";
         public Adapter Owner { get; set; }//tcpServer's Owner-"Adapter Object"
         //public GroundBox gBox { get; set; }
         private Object SentObject = new Object();
@@ -44,8 +54,8 @@ namespace GLAS_Adapter
         /// <summary>
         /// 存放井深的字节数组
         /// </summary>
-        private byte[] WellDeptBytes = new byte[6];
-        private byte[] WellDeptBytesCMS=new byte[6];
+        private byte[] WellDeptBytes = new byte[8];
+        private byte[] WellDeptBytesCMS=new byte[8];
         private byte[] TempBytes = null;
         private byte[] bytesSent=null;
         /// <summary>
@@ -71,6 +81,9 @@ namespace GLAS_Adapter
             Emp6[0] = Emp6[1] = 0x44;
             WellDeptBytesCMS[0] = WellDeptBytesCMS[1] = 0x45;
             Emp802[0] = Emp802[1] = 0x53;
+            Emp808[0] = Emp808[1] = 0x53;
+            //fs = new FileStream(OriginLog,FileMode.Append);
+            //sw = new StreamWriter(fs);
         }
         /// <summary>
         /// tcp服务开始启动
@@ -87,10 +100,10 @@ namespace GLAS_Adapter
                 RecvThread.Start();
                 RecvTimer1.Start(1000, true);
                 RecvTimer2.Start(250, true);//Half period of circulation
-                DepthTemp.Add(0x44);
-                DepthTemp.Add(0x44);
-                DataTemp.Add(0x53);
-                DataTemp.Add(0x53);
+                //DepthTemp.Add(0x44);
+                //DepthTemp.Add(0x44);//DD
+                //DataTemp.Add(0x53);//SS
+                //DataTemp.Add(0x53);
                 WellDeptBytesCMS[0] = 0x45;
                 WellDeptBytesCMS[1] = 0x45;
                 bRet = true;
@@ -146,6 +159,18 @@ namespace GLAS_Adapter
                 //{
                 //    RecvTimer3.Stop();
                 //}
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(ex.Message);
+            }
+            try
+            {
+                if (fs != null)
+                {
+                    sw.Close();
+                    fs.Close();
+                }
             }
             catch (Exception ex)
             {
@@ -245,7 +270,79 @@ namespace GLAS_Adapter
                     WellDeptBytesCMS[3] = curWellDeptBytes[1];
                     WellDeptBytesCMS[4] = curWellDeptBytes[2];
                     WellDeptBytesCMS[5] = curWellDeptBytes[3];
-                    if (IsStartDepth && CurClientSocket != null && CurClientSocket.Connected && TypeDepth.Equals(DepType.CMS))
+                    if (IsStartDepth && CurClientSocket != null && CurClientSocket.Connected 
+                        && (TypeDepth.Equals(DepType.CMS)||TypeDepth.Equals(DepType.SK2000)))
+                    {
+                        Trace.WriteLine(DateTime.Now.ToLongTimeString());
+                        Funcs._funcs.print(WellDeptBytesCMS);
+                        if (Sent(WellDeptBytesCMS) <= 0)
+                        {
+                            System.Diagnostics.Trace.WriteLine("下发深度数据失败！");
+                        }
+                    }
+                }
+                lock (ClientSocketAsynObj)
+                {
+                    if (IsStartWell && CurClientSocket != null && CurClientSocket.Connected)
+                    {
+                        byte[] curSppBytes = CommonData.GetQueueItem();
+                        TempBytes = Emp808;
+                        if (curSppBytes != null)
+                        {
+                            DataTemp.AddRange(curSppBytes);
+                            while (DataTemp.Count >= 802)
+                            {
+                                if (DataTemp[800] == DataTemp[801] && DataTemp[800] == 0x53)//帧头在后（特殊情况）
+                                {
+                                    TempBytes[0] = DataTemp[800];
+                                    TempBytes[1] = DataTemp[801];
+                                    for (int i = 0; i < 800; i++)
+                                    {
+                                        TempBytes[i + 8] = DataTemp[i];
+                                    }
+                                }
+                                else if (DataTemp[0] == DataTemp[1] && DataTemp[0] == 0x53)//帧头在前(正常情况)
+                                {
+                                    for (int i = 0; i < 800; i++)
+                                    {
+                                        TempBytes[i + 8] = DataTemp[i + 2];
+                                    }
+                                }
+                                DataTemp.Clear();
+                                Trace.WriteLine(DateTime.Now.ToLongTimeString());
+                                TempSendBytes = TempBytes;
+                                Funcs._funcs.print(TempSendBytes);
+                                //{
+                                //    if (Sent(TempBytes) <= 0)
+                                //    {
+                                //        System.Diagnostics.Trace.WriteLine("下发压力数据失败！");
+                                //        break;
+                                //    }
+                                //}
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Trace.WriteLine("TCPServer::SendTimerFunc->" + e.Message);
+            }
+        }
+
+        /*
+         *                 
+         * lock (ClientSocketAsynObj)
+                {
+                    RecvCount++;
+                    //发送深度数据//c3 f5 48 40
+                    //CommonData.WellDepth++;//????????
+                    byte[] curWellDeptBytes = BitConverter.GetBytes(CommonData.WellDepth);
+                    WellDeptBytesCMS[2] = curWellDeptBytes[0];
+                    WellDeptBytesCMS[3] = curWellDeptBytes[1];
+                    WellDeptBytesCMS[4] = curWellDeptBytes[2];
+                    WellDeptBytesCMS[5] = curWellDeptBytes[3];
+                    if (IsStartDepth && CurClientSocket != null && CurClientSocket.Connected && (TypeDepth.Equals(DepType.CMS)||TypeDepth.Equals(DepType.SK2000)))
                     {
                         Trace.WriteLine(DateTime.Now.ToLongTimeString());
                         Funcs._funcs.print(WellDeptBytesCMS);
@@ -280,12 +377,13 @@ namespace GLAS_Adapter
                                     for (int i = 0; i < 802; i++)
                                     {
                                         TempBytes[i] = DataTemp[i];
+
                                     }
                                 }
                                 DataTemp.Clear();
                                 Trace.WriteLine(DateTime.Now.ToLongTimeString());
                                 Funcs._funcs.print(TempBytes);
-                                //lock (SentObject)
+
                                 {
                                     if (Sent(TempBytes) <= 0)
                                     {
@@ -297,14 +395,11 @@ namespace GLAS_Adapter
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Trace.WriteLine("TCPServer::SendTimerFunc->" + e.Message);
-            }
-        }
+         * */
+
+
         /// <summary>
-        /// 定时发送CPL_BPI&GZ函数
+        /// 定时发送采集箱获得的 BPI&GZ 计数器
         /// </summary>
         /// <param name="uTimerID"></param>
         /// <param name="uMsg"></param>
@@ -326,51 +421,61 @@ namespace GLAS_Adapter
                             DepthTemp.AddRange(curWellDeptBytes);
                             while (DepthTemp.Count >= 6)
                             {
-                                WellDeptBytes =Emp6;
+                                WellDeptBytes =Emp8;
                                 if (DepthTemp[0] == DepthTemp[1] && DepthTemp[0] == 0x44)
-                                {                        
-                                    WellDeptBytes[0] = DepthTemp[0];
-                                    WellDeptBytes[1] = DepthTemp[1];
-                                    WellDeptBytes[2] = DepthTemp[4];
-                                    WellDeptBytes[3] = DepthTemp[5];
-                                    WellDeptBytes[4] = DepthTemp[2];
-                                    WellDeptBytes[5] = DepthTemp[3];
+                                {
+                                    //WellDeptBytes[0] = 0x53;
+                                    //WellDeptBytes[1] = 0x53;
+                                    WellDeptBytes[2] = 0x00;
+                                    WellDeptBytes[3] = 0x00;//BPI方向
+                                    WellDeptBytes[4] = DepthTemp[4];
+                                    WellDeptBytes[5] = DepthTemp[5];//BPI
+                                    WellDeptBytes[6] = DepthTemp[2];
+                                    WellDeptBytes[7] = DepthTemp[3];//HookLoad
                                     frag = 0;
                                 }
                                 else if (DepthTemp[2] == DepthTemp[3] && DepthTemp[2] == 0x44)
                                 {
-                                    WellDeptBytes[0] = DepthTemp[2];
-                                    WellDeptBytes[1] = DepthTemp[3];
-                                    WellDeptBytes[2] = DepthTemp[0];
-                                    WellDeptBytes[3] = DepthTemp[1];
-                                    WellDeptBytes[4] = DepthTemp[4];
-                                    WellDeptBytes[5] = DepthTemp[5];
+                                    //WellDeptBytes[0] = 0x53;
+                                    //WellDeptBytes[1] = 0x53;
+                                    WellDeptBytes[2] = 0x00;
+                                    WellDeptBytes[3] = 0x00;//BPI方向
+                                    WellDeptBytes[4] = DepthTemp[0];
+                                    WellDeptBytes[5] = DepthTemp[1];
+                                    WellDeptBytes[6] = DepthTemp[4];
+                                    WellDeptBytes[7] = DepthTemp[5];
                                     frag = 2;
                                 }
                                 else if (DepthTemp[4] == DepthTemp[5] && DepthTemp[4] == 0x44)
                                 {
-                                    WellDeptBytes[0] = DepthTemp[4];
-                                    WellDeptBytes[1] = DepthTemp[5];
-                                    WellDeptBytes[2] = DepthTemp[2];
-                                    WellDeptBytes[3] = DepthTemp[3];
-                                    WellDeptBytes[4] = DepthTemp[0];
-                                    WellDeptBytes[5] = DepthTemp[1];
+                                    //WellDeptBytes[0] = 0x53;
+                                    //WellDeptBytes[1] = 0x53;
+                                    WellDeptBytes[2] = 0x00;
+                                    WellDeptBytes[3] = 0x00;//BPI方向
+                                    WellDeptBytes[4] = DepthTemp[2];
+                                    WellDeptBytes[5] = DepthTemp[3];
+                                    WellDeptBytes[6] = DepthTemp[0];
+                                    WellDeptBytes[7] = DepthTemp[1];
                                     frag = 4;
                                 }
-                                if (DepthTemp.Count > 6)
+                                if (DepthTemp.Count > 6 || DepthTemp.Count < 6)
                                     DepthTemp.RemoveRange(0, frag);
                                 else if (DepthTemp.Count == 6)
                                     DepthTemp.RemoveRange(0, 6);
                                 DepthTemp.Clear();
                                 Trace.WriteLine(DateTime.Now.ToLongTimeString());
                                 Funcs._funcs.print(WellDeptBytes);
-                                //lock (SentObject)
+                                Array.Copy(TempSendBytes,2,TempSendBytes,2,6);
+                                //TempSendBytes[2] = WellDeptBytes[2];
+                                //TempSendBytes[3] = WellDeptBytes[3];
+                                //TempSendBytes[4] = WellDeptBytes[4];
+                                //TempSendBytes[5] = WellDeptBytes[5];
+                                //TempSendBytes[6] = WellDeptBytes[6];
+                                //TempSendBytes[7] = WellDeptBytes[7];
+                                if (Sent(TempSendBytes) <= 0)
                                 {
-                                    if (Sent(WellDeptBytes) <= 0)
-                                    {
-                                        System.Diagnostics.Trace.WriteLine("发送深度数据失败！");
-                                        break;
-                                    }
+                                    System.Diagnostics.Trace.WriteLine("发送深度数据失败！");
+                                    break;
                                 }
                             }
                         }
@@ -474,7 +579,7 @@ namespace GLAS_Adapter
         {
             try
             {
-                RecvTimer2.Start(250, true);
+                RecvTimer2.Start(1000, true);
                 return true;
             }
             catch (Exception ex)
